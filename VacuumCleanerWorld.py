@@ -64,6 +64,7 @@ def RotateDirVec90Deg(dirVec,rotation):
 def RotateDirVec180Deg(dirVec,rotation):
     return RotateDirVec90Deg(RotateDirVec90Deg(dirVec,rotation),rotation)
 
+print_rotations = False
 
 class Environment:
     Grid = []
@@ -71,6 +72,7 @@ class Environment:
     Height = 0
     NumCollisions = 0
     NumTurns = 0
+    InitialDirtyAmount = 0
 
     def __init__(self,width,height):
         self.Width = width
@@ -102,21 +104,38 @@ class Environment:
         else:
             return False
 
+    def CountDirty(self):
+        numDirty = 0
+        for x in range(self.Width):
+            for y in range(self.Height):
+                if self.GetTile(x,y) == DIRTY:
+                    numDirty += 1
+        return numDirty
+
+    def GetPercentClean(self):
+        return (1-(self.CountDirty()/self.InitialDirtyAmount)) * 100
+
     def RandomizeWithoutWalls(self):
         for x in range(self.Width):
             for y in range(self.Height):
                 self.SetTile(x,y,random.randint(CLEAN,DIRTY))
+        self.InitialDirtyAmount = self.CountDirty()
 
     def RandomizeWithWalls(self):
-        return
+        for x in range(self.Width):
+            for y in range(self.Height):
+                self.SetTile(x,y,random.randint(CLEAN,WALL))
+        self.InitialDirtyAmount = self.CountDirty()
+    
+    
 
     def Visualize(self):
         print("visualizing w:{}, h:{}".format(self.Width,self.Height))
         for y in range (self.Height):
             for x in range (self.Width):
-                print("[{}]".format(self.GetTile(x,y)),end="")
+                print("[{}] ".format(self.GetTile(x,y)),end="")
             print("")
-        print("Collisions: {}, Steps: {}".format(self.NumCollisions, self.NumTurns))
+        print("Collisions: {}, Steps: {}, Percent Cleaned: {}%".format(self.NumCollisions, self.NumTurns,self.GetPercentClean()))
         return
 
 class Agent:
@@ -138,11 +157,13 @@ class Agent:
 
     def Rotate(self, dir):
         self.DirFacingVec = RotateDirVec45Deg(self.DirFacingVec,dir)
-        if dir == CW:
-            print("agent rotated 45 degrees clockwise")
-        elif dir == CCW:
-            print("agent rotated 45 degrees counterclockwise")
-        print("agent direction: x:{} y:{}".format(self.DirFacingVec[0],self.DirFacingVec[1]))
+
+        if print_rotations:
+            if dir == CW:
+                print("agent rotated 45 degrees clockwise")
+            elif dir == CCW:
+                print("agent rotated 45 degrees counterclockwise")
+            print("agent direction: x:{} y:{}".format(self.DirFacingVec[0],self.DirFacingVec[1]))
 
     def MoveForward(self):
         newX = self.Position[0] + self.DirFacingVec[0]
@@ -220,7 +241,7 @@ class SimpleReflexAgent(Agent):
         return
 
 def main():
-    vacuumWorld = Environment(3,3)
+    vacuumWorld = Environment(10,10)
     vacuumWorld.RandomizeWithoutWalls()
     
     vacuumWorld.Visualize()
