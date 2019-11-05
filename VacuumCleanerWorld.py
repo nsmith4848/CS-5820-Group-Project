@@ -1,6 +1,8 @@
+import random
+
 CLEAN = 0
 DIRTY = 1
-WALL = 3
+WALL = 2
 
 CCW = 0
 CW = 1
@@ -71,6 +73,8 @@ class Environment:
     NumTurns = 0
 
     def __init__(self,width,height):
+        self.Width = width
+        self.Height = height
         self.Grid = []
         for x in range(width):
             newCol = []
@@ -79,21 +83,40 @@ class Environment:
             self.Grid.append(newCol)
 
     def GetTile(self,x,y):
-        return self.Grid[x][y]
+        if x >= self.Width or y >= self.Height or x < 0 or y < 0:
+            return WALL
+        else:
+            return self.Grid[x][y]
     
     def SetTile(self,x,y,val):
-        self.grid[x][y] = val
+        self.Grid[x][y] = val
 
     def Collide(self,pos):
         self.NumTurns += 1
         if pos[0] >= self.Width or pos[1] >= self.Height:
             self.NumCollisions += 1
             return True
-        elif self.GetTile(self,pos[0],pos[1]) == WALL:
+        elif self.GetTile(pos[0],pos[1]) == WALL:
             self.NumCollisions += 1
             return True
         else:
             return False
+
+    def RandomizeWithoutWalls(self):
+        for x in range(self.Width):
+            for y in range(self.Height):
+                self.SetTile(x,y,random.randint(CLEAN,DIRTY))
+
+    def RandomizeWithWalls(self):
+        return
+
+    def Visualize(self):
+        print("visualizing w:{}, h:{}".format(self.Width,self.Height))
+        for y in range (self.Height):
+            for x in range (self.Width):
+                print("[{}]".format(self.GetTile(x,y)),end="")
+            print("")
+        return
 
 class Agent:
     Status = CLEAN
@@ -101,25 +124,74 @@ class Agent:
     
     Position = (0,0)
     DirFacingVec = NORTH
+    Environ = Environment(2,1)
 
     def __init__(self, startingPos, startingDir, environ):
         self.Position = startingPos 
         self.DirFacingVec = startingDir
+        self.Environ = environ
 
-    def GetPercept(self,environ):
-        self.Status = environ.GetTile(self.Position[0],self.Position[1])
-        self.FacingTile = environ.GetTile(self.Position[0] + self.DirFacingVec[0],self.Position[1] + self.DirFacingVec[1])
+    def GetPercept(self):
+        self.Status = self.Environ.GetTile(x=self.Position[0],y=self.Position[1])
+        self.FacingTile = self.Environ.GetTile(self.Position[0] + self.DirFacingVec[0],self.Position[1] + self.DirFacingVec[1])
 
     def Rotate(self, dir):
         self.DirFacingVec = RotateDirVec45Deg(self.DirFacingVec,dir)
 
-    def MoveForward(self,environ):
-        if not environ.Collide(self.Position[0] + self.DirFacingVec[0],self.Position[1] + self.DirFacingVec[1]):
+    def MoveForward(self):
+        newX = self.Position[0] + self.DirFacingVec[0]
+        newY = self.Position[1] + self.DirFacingVec[1]
+        if not self.Environ.Collide((newX,newY)):
             self.Position = (self.Position[0] + self.DirFacingVec[0],self.Position[1] + self.DirFacingVec[1])
+    
+    def CleanTile(self):
+        self.Environ.SetTile(self.Position[0],self.Position[1],CLEAN)
+        return
+
+    def Run(self):
+        return
 
 
 class SimpleReflexAgent(Agent):
     def __init__(self, startingPos, startingDir, environ):
         super().__init__(startingPos, startingDir, environ)
 
+    def Run(self):
+        running = True
+        while running:
+            self.GetPercept()
+            if self.Status == DIRTY:
+                self.CleanTile()
+            if self.FacingTile == DIRTY:
+                self.MoveForward()
+            else:
+                self.Rotate(CW)
+                if self.FacingTile == DIRTY:
+                    self.MoveForward()
+                else:
+                    self.Rotate(CW)
+                    if self.FacingTile == DIRTY:
+                        self.MoveForward()
+                    else:
+                        self.Rotate(CW)
+                        if self.FacingTile == DIRTY:
+                            self.MoveForward()
+                        else:
+                            running = False
+        
+        return
+
+def main():
+    vacuumWorld = Environment(2,1)
+    vacuumWorld.RandomizeWithoutWalls()
+    
+    vacuumWorld.Visualize()
+    reflexAgent = SimpleReflexAgent((0,0),EAST,vacuumWorld)
+    reflexAgent.Run()
+    vacuumWorld.Visualize()
+
+    print("done")
+
+if __name__ == "__main__":
+    main()
 
