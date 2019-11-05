@@ -116,6 +116,7 @@ class Environment:
             for x in range (self.Width):
                 print("[{}]".format(self.GetTile(x,y)),end="")
             print("")
+        print("Collisions: {}, Steps: {}".format(self.NumCollisions, self.NumTurns))
         return
 
 class Agent:
@@ -137,12 +138,20 @@ class Agent:
 
     def Rotate(self, dir):
         self.DirFacingVec = RotateDirVec45Deg(self.DirFacingVec,dir)
+        if dir == CW:
+            print("agent rotated 45 degrees clockwise")
+        elif dir == CCW:
+            print("agent rotated 45 degrees counterclockwise")
+        print("agent direction: x:{} y:{}".format(self.DirFacingVec[0],self.DirFacingVec[1]))
 
     def MoveForward(self):
         newX = self.Position[0] + self.DirFacingVec[0]
         newY = self.Position[1] + self.DirFacingVec[1]
         if not self.Environ.Collide((newX,newY)):
             self.Position = (self.Position[0] + self.DirFacingVec[0],self.Position[1] + self.DirFacingVec[1])
+            print("agent position: x:{} y:{}".format(self.Position[0],self.Position[1]))
+        else:
+            print("agent collided")
     
     def CleanTile(self):
         self.Environ.SetTile(self.Position[0],self.Position[1],CLEAN)
@@ -158,31 +167,60 @@ class SimpleReflexAgent(Agent):
 
     def Run(self):
         running = True
+        print("agent starting position: x:{} y:{}".format(self.Position[0],self.Position[1]))
+        print("agent starting direction: x:{} y:{}".format(self.DirFacingVec[0],self.DirFacingVec[1]))
         while running:
+            
             self.GetPercept()
+
             if self.Status == DIRTY:
                 self.CleanTile()
+
             if self.FacingTile == DIRTY:
                 self.MoveForward()
             else:
-                self.Rotate(CW)
+                self.Rotate(CW) #45 deg
+                
+                self.GetPercept()
                 if self.FacingTile == DIRTY:
                     self.MoveForward()
                 else:
-                    self.Rotate(CW)
+                    self.Rotate(CW) #90 deg
+                    self.GetPercept()
                     if self.FacingTile == DIRTY:
                         self.MoveForward()
                     else:
-                        self.Rotate(CW)
+                        self.Rotate(CW) #135 deg
+                        self.GetPercept()
                         if self.FacingTile == DIRTY:
                             self.MoveForward()
                         else:
-                            running = False
+                            self.Rotate(CW) #180 deg
+                            self.GetPercept()
+                            if self.FacingTile == DIRTY:
+                                self.MoveForward()
+                            else:
+                                self.Rotate(CW) #225 deg
+                                self.GetPercept()
+                                if self.FacingTile == DIRTY:
+                                    self.MoveForward()
+                                else:
+                                    self.Rotate(CW) #270 deg
+                                    self.GetPercept()
+                                    if self.FacingTile == DIRTY:
+                                        self.MoveForward()
+                                    else:
+                                        self.Rotate(CW) #315 deg
+                                        self.GetPercept()
+                                        if self.FacingTile == DIRTY:
+                                            self.MoveForward()
+                                        else:
+                                            running = False
         
         return
 
 def main():
-    vacuumWorld = Environment(2,1)
+    vacuumWorld = Environment(3,3)
     vacuumWorld.RandomizeWithoutWalls()
     
     vacuumWorld.Visualize()
