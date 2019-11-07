@@ -1,0 +1,7 @@
+2.8:  See VacuumCleanerWorld.py
+2.9:  See VacuumCleanerWorld.py
+2.10: a) A simple reflex agent will be unable to solve some formations in the most rational manner, as it may make an inefficient step, but
+inevitably returns to the 'right' path.  However, this means that it is done in more steps than are necessary, resulting in a less than rational
+but goal-achieving approach.
+b) 
+c) 
